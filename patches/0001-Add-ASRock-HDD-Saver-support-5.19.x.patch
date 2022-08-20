@@ -1,5 +1,5 @@
 From 7a46b0a2eeaa009e337cb129c0a79255d4a6047c Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?Pawe=C5=82=20Marciniak?= <sunwire+git@gmail.com>
+From: =?UTF-8?q?Pawe=C5=82=20Marciniak?= <xxxxxxxxxxx@xxxxx.xxx>
 Date: Sat, 20 Aug 2022 14:09:25 +0200
 Subject: [PATCH] Add ASRock HDD Saver support 5.19.x
 
@@ -85,7 +85,7 @@ index 8c108f4..0666e7c 100644
  			  nct6775_store_beep, INTRUSION_ALARM_BASE + 1);
  static SENSOR_DEVICE_ATTR(beep_enable, 0644, nct6775_show_beep,
  			  nct6775_store_beep, BEEP_ENABLE_BASE);
-+static SENSOR_DEVICE_ATTR(hddsaver_enable, 0644, show_hddsaver,
++static SENSOR_DEVICE_ATTR(hddsaver_power, 0644, show_hddsaver,
 +			  store_hddsaver, 0);
 +
  
@@ -106,7 +106,7 @@ index 8c108f4..0666e7c 100644
  	&sensor_dev_attr_intrusion1_beep.dev_attr.attr,		/* 4 */
  	&sensor_dev_attr_beep_enable.dev_attr.attr,		/* 5 */
 -
-+	&sensor_dev_attr_hddsaver_enable.dev_attr.attr, /* 6 */
++	&sensor_dev_attr_hddsaver_power.dev_attr.attr, /* 6 */
  	NULL
  };
  
