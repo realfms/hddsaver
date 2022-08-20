@@ -1,15 +1,15 @@
-From 0fc59a67c48db0e4e0eb2e287a27875801003942 Mon Sep 17 00:00:00 2001
+From 7a46b0a2eeaa009e337cb129c0a79255d4a6047c Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Pawe=C5=82=20Marciniak?= <xxxxxxxxxxx@xxxxx.xxx>
-Date: Sun, 14 Aug 2022 19:28:01 +0200
+Date: Sat, 20 Aug 2022 14:09:25 +0200
 Subject: [PATCH] Add ASRock HDD Saver support 5.19.x
 
 ---
- drivers/hwmon/nct6775-platform.c | 85 ++++++++++++++++++++++++++++++++
- drivers/hwmon/nct6775.h          |  5 ++
- 2 files changed, 90 insertions(+)
+ drivers/hwmon/nct6775-platform.c | 111 ++++++++++++++++++++++++++++++-
+ drivers/hwmon/nct6775.h          |   2 +
+ 2 files changed, 112 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/hwmon/nct6775-platform.c b/drivers/hwmon/nct6775-platform.c
-index 6d46c9401..b41c27637 100644
+index 8c108f4..0666e7c 100644
 --- a/drivers/hwmon/nct6775-platform.c
 +++ b/drivers/hwmon/nct6775-platform.c
 @@ -67,6 +67,7 @@ MODULE_PARM_DESC(fan_debounce, "Enable debouncing for fan RPM signal");
@@ -43,7 +43,7 @@ index 6d46c9401..b41c27637 100644
 +
 +static ssize_t
 +store_hddsaver(struct device *dev, struct device_attribute *attr,
-+        const char *buf, size_t count)
++		const char *buf, size_t count)
 +{
 +	struct nct6775_data *data = dev_get_drvdata(dev);
 +	struct nct6775_sio_data *sio_data = data->driver_data;
@@ -95,82 +95,105 @@ index 6d46c9401..b41c27637 100644
  			return 0;
  	}
  
-+    if (index == 6 && !data->have_hddsaver)
++	if (index == 6 && !data->have_hddsaver)
 +		return 0;
 +
  	return nct6775_attr_mode(data, attr);
  }
  
-@@ -791,6 +845,7 @@ static struct attribute *nct6775_attributes_other[] = {
+@@ -791,7 +845,7 @@ static struct attribute *nct6775_attributes_other[] = {
  	&sensor_dev_attr_intrusion0_beep.dev_attr.attr,		/* 3 */
  	&sensor_dev_attr_intrusion1_beep.dev_attr.attr,		/* 4 */
  	&sensor_dev_attr_beep_enable.dev_attr.attr,		/* 5 */
+-
 +	&sensor_dev_attr_hddsaver_enable.dev_attr.attr, /* 6 */
- 
  	NULL
  };
-@@ -805,6 +860,8 @@ static int nct6775_platform_probe_init(struct nct6775_data *data)
+ 
+@@ -800,11 +854,39 @@ static const struct attribute_group nct6775_group_other = {
+ 	.is_visible = nct6775_other_is_visible,
+ };
+ 
++static const char * const asrock_hddsaver_boards[] = {
++	"Fatal1ty X99X Killer",
++	"Fatal1ty X99X Killer/3.1",
++	"Fatal1ty Z97 Professional",
++	"Fatal1ty Z97X Killer",
++	"X99 Extreme11",
++	"X99 Extreme4",
++	"X99 Extreme4/3.1",
++	"X99 Extreme3",
++	"X99 Extreme6",
++	"X99 Extreme6/ac",
++	"X99 Extreme6/3.1",
++	"X99 OC Formula",
++	"X99 OC Formula/3.1",
++	"X99 WS",
++	"X99M Extreme4",
++	"Z97 Extreme4",
++	"Z97 Extreme4/3.1",
++	"Z97 Extreme6",
++	"Z97 Extreme6/3.1",
++	"Z97 Extreme6/ac",
++	"Z97 Extreme9",
++	"Z97 OC Formula",
++};
++
+ static int nct6775_platform_probe_init(struct nct6775_data *data)
+ {
  	int err;
  	u8 cr2a;
  	struct nct6775_sio_data *sio_data = data->driver_data;
 +	const char *board_vendor = dmi_get_system_info(DMI_BOARD_VENDOR);
 +	const char *board_name = dmi_get_system_info(DMI_BOARD_NAME);
++	const char *hddsaver_switch_msg = "HDD Saver power switch is";
  
  	err = sio_data->sio_enter(sio_data);
  	if (err)
-@@ -822,6 +879,17 @@ static int nct6775_platform_probe_init(struct nct6775_data *data)
+@@ -822,6 +904,33 @@ static int nct6775_platform_probe_init(struct nct6775_data *data)
  	case nct6116:
  	case nct6779:
  	case nct6791:
 +		if (board_name && board_vendor &&
-+		    !strcmp(board_vendor, "ASRock")) {
-+			/* Z97 Extreme6 should also work (the same GPIO10 pin is used) */
-+			/* but it needs testing!!! */
-+			if (!strcmp(board_name, "Z97 Extreme4") ||
-+			    !strcmp(board_name, "Z97 Extreme6") ||
-+			    !strcmp(board_name, "X99 Extreme4/3.1")) {
++			!strcmp(board_vendor, "ASRock")) {
++			if (match_string(asrock_hddsaver_boards,
++						ARRAY_SIZE(asrock_hddsaver_boards),
++						board_name) >= 0) {
 +				data->have_hddsaver = (cr2a & (1 << 6));
++
++				if (data->have_hddsaver) {
++					u8 tmp;
++
++					pr_notice("HDD Saver technology is enabled");
++					sio_data->sio_select(
++						sio_data, NCT6775_LD_GPIO_DATA); /* Logical Device 8 */
++					tmp = sio_data->sio_inb(sio_data,
++						NCT6775_REG_CR_GPIO1_DATA); /* GPIO1 data reg */
++					data->hddsaver_status = tmp & (1 << 0); /* check bit0 */
++					if (data->hddsaver_status) {
++						pr_warn("%s on", hddsaver_switch_msg);
++					} else {
++						pr_warn("%s off", hddsaver_switch_msg);
++					}
++				}
++				else
++					pr_notice("HDD Saver technology is disabled\n");
 +			}
 +		}
 +		break;
  	case nct6792:
  	case nct6793:
  	case nct6795:
-@@ -831,6 +899,23 @@ static int nct6775_platform_probe_init(struct nct6775_data *data)
- 		break;
- 	}
- 
-+	if (data->have_hddsaver) {
-+		u8 tmp;
-+
-+		pr_notice("HDD Saver found\n");
-+		sio_data->sio_select(
-+			sio_data, NCT6775_LD_GPIO_DATA); /* Logical Device 8 */
-+		tmp = sio_data->sio_inb(
-+			sio_data,
-+			NCT6775_REG_CR_GPIO1_DATA); /* GPIO1 data reg */
-+		data->hddsaver_status = tmp & (1 << 0); /* check bit0 */
-+		if (data->hddsaver_status) {
-+			pr_warn("HDD Saver is disabled\n");
-+		} else {
-+			pr_warn("HDD Saver is enabled\n");
-+		}
-+	}
-+
- 	/*
- 	 * Read VID value
- 	 * We can get the VID input values directly at logical device D 0xe3.
 diff --git a/drivers/hwmon/nct6775.h b/drivers/hwmon/nct6775.h
-index 93f708148..7054c59a8 100644
+index be41848..25bdebd 100644
 --- a/drivers/hwmon/nct6775.h
 +++ b/drivers/hwmon/nct6775.h
-@@ -161,6 +161,9 @@ struct nct6775_data {
+@@ -161,6 +161,8 @@ struct nct6775_data {
  	u8 vrm;
  
  	bool have_vid;
-+	bool have_hddsaver; /* True if hdd saver is supported */
-+	bool hddsaver_status; /* True if enabled */
-+
++	bool have_hddsaver; /* True if hdd saver is enabled in BIOS */
++	bool hddsaver_status; /* True if power switch is on */
  
  	u16 have_temp;
  	u16 have_temp_fixed;

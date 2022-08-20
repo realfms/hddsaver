@@ -12,6 +12,27 @@ When this technology is available the module creates the hddsaver_enable file.
 Reading the file returns the current status, while writing turns off or on the power of the SATA connectors.
 
 Supported boards:
-- Z97 Extreme4 - tested
-- Z97 Extreme6 - not tested
-- X99 Extreme4/3.1 - not tested
+- Tested
+	- Z97 Extreme4
+- Not tested
+	- Fatal1ty X99X Killer
+	- Fatal1ty X99X Killer/3.1
+	- Fatal1ty Z97 Professional
+	- Fatal1ty Z97X Killer
+	- X99 Extreme11
+	- X99 Extreme4
+	- X99 Extreme4/3.1
+	- X99 Extreme3
+	- X99 Extreme6
+	- X99 Extreme6/ac
+	- X99 Extreme6/3.1
+	- X99 OC Formula
+	- X99 OC Formula/3.1
+	- X99 WS
+	- X99M Extreme4
+	- Z97 Extreme4/3.1
+	- Z97 Extreme6
+	- Z97 Extreme6/3.1
+	- Z97 Extreme6/ac
+	- Z97 Extreme9
+	- Z97 OC Formula
