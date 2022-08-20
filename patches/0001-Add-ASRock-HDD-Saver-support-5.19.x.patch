@@ -1,5 +1,5 @@
 From 7a46b0a2eeaa009e337cb129c0a79255d4a6047c Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?Pawe=C5=82=20Marciniak?= <xxxxxxxxxxx@xxxxx.xxx>
+From: =?UTF-8?q?Pawe=C5=82=20Marciniak?= <sunwire+git@gmail.com>
 Date: Sat, 20 Aug 2022 14:09:25 +0200
 Subject: [PATCH] Add ASRock HDD Saver support 5.19.x
 
@@ -16,7 +16,7 @@ index 8c108f4..0666e7c 100644
  #define NCT6775_LD_ACPI		0x0a
  #define NCT6775_LD_HWM		0x0b
  #define NCT6775_LD_VID		0x0d
-+#define NCT6775_LD_GPIO_DATA 0x08
++#define NCT6775_LD_GPIO1	0x08
  #define NCT6775_LD_12		0x12
  
  #define SIO_REG_LDSEL		0x07	/* Logical device select */
@@ -63,7 +63,7 @@ index 8c108f4..0666e7c 100644
 +	}
 +
 +	if (val != data->hddsaver_status) {
-+		sio_data->sio_select(sio_data, NCT6775_LD_GPIO_DATA); /* Logical Device 8 */
++		sio_data->sio_select(sio_data, NCT6775_LD_GPIO1); /* Logical Device 8 */
 +		tmp = sio_data->sio_inb(sio_data,
 +				  NCT6775_REG_CR_GPIO1_DATA); /* GPIO1 date reg */
 +		sio_data->sio_outb(sio_data, NCT6775_REG_CR_GPIO1_DATA, tmp ^ (1<<0));
@@ -166,7 +166,7 @@ index 8c108f4..0666e7c 100644
 +
 +					pr_notice("HDD Saver technology is enabled");
 +					sio_data->sio_select(
-+						sio_data, NCT6775_LD_GPIO_DATA); /* Logical Device 8 */
++						sio_data, NCT6775_LD_GPIO1); /* Logical Device 8 */
 +					tmp = sio_data->sio_inb(sio_data,
 +						NCT6775_REG_CR_GPIO1_DATA); /* GPIO1 data reg */
 +					data->hddsaver_status = tmp & (1 << 0); /* check bit0 */
