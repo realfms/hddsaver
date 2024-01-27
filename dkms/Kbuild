@@ -1,0 +1,2 @@
+saver6775-y := src/saver6775.o
+obj-m := saver6775.o
